@@ -9,6 +9,8 @@ namespace input
         MoveDown,
         MoveLeft,
         MoveRight,
+        PreviousLevel,
+        NextLevel,
         Reset,
         Quit
     };

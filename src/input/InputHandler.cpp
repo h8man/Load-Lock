@@ -37,6 +37,10 @@ namespace input
             return Command::MoveLeft;
         case 'd':
             return Command::MoveRight;
+        case 'p':
+            return Command::PreviousLevel;
+        case 'n':
+            return Command::NextLevel;
         case 'r':
             return Command::Reset;
         case 'q':

@@ -5,10 +5,15 @@
 
 namespace assets
 {
+    struct LevelData
+    {
+        std::string name;
+        std::vector<std::string> rows;
+    };
+
     class AssetManager
     {
     public:
-        std::string FindLevelPath(const std::string& levelName) const;
-        bool LoadLevelRows(const std::string& path, std::vector<std::string>& rows) const;
+        bool LoadLevels(std::vector<LevelData>& levels, std::string& error) const;
     };
 }

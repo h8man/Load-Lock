@@ -14,18 +14,24 @@ namespace core
     int Application::Run() const
     {
         assets::AssetManager assetManager;
-        const std::string levelPath = assetManager.FindLevelPath("level1.txt");
-
-        std::vector<std::string> rows;
-        if (!assetManager.LoadLevelRows(levelPath, rows))
+        std::vector<assets::LevelData> levels;
+        std::string error;
+        if (!assetManager.LoadLevels(levels, error))
         {
-            std::cerr << "Failed to load level file: " << levelPath << '\n';
+            std::cerr << "Failed to load levels: " << error << '\n';
             return 1;
         }
 
         game::GameLogic gameState;
-        std::string error;
-        if (!gameState.Load(rows, error))
+        std::size_t currentLevelIndex = 0;
+
+        const auto loadCurrentLevel = [&]() -> bool
+        {
+            error.clear();
+            return gameState.Load(levels[currentLevelIndex].rows, error);
+        };
+
+        if (!loadCurrentLevel())
         {
             std::cerr << "Failed to initialize level: " << error << '\n';
             return 1;
@@ -36,7 +42,11 @@ namespace core
 
         while (true)
         {
-            renderer.Render(gameState);
+            renderer.Render(
+                gameState,
+                levels[currentLevelIndex].name,
+                static_cast<int>(currentLevelIndex + 1),
+                static_cast<int>(levels.size()));
 
             switch (inputHandler.ReadCommand())
             {
@@ -62,6 +72,28 @@ namespace core
                 if (!gameState.IsComplete())
                 {
                     gameState.Move(1, 0);
+                }
+                break;
+            case input::Command::PreviousLevel:
+                if (currentLevelIndex > 0)
+                {
+                    --currentLevelIndex;
+                    if (!loadCurrentLevel())
+                    {
+                        std::cerr << "Failed to initialize level: " << error << '\n';
+                        return 1;
+                    }
+                }
+                break;
+            case input::Command::NextLevel:
+                if (currentLevelIndex + 1 < levels.size())
+                {
+                    ++currentLevelIndex;
+                    if (!loadCurrentLevel())
+                    {
+                        std::cerr << "Failed to initialize level: " << error << '\n';
+                        return 1;
+                    }
                 }
                 break;
             case input::Command::Reset:
