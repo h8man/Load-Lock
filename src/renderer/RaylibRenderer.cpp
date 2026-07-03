@@ -115,6 +115,7 @@ namespace renderer
     {
         Texture2D sprites = { 0 };
         bool hasSprites = false;
+        bool useFallbackGraphics = false;
         std::string spriteSheetPath;
     };
 
@@ -152,22 +153,33 @@ namespace renderer
 
     void RaylibRenderer::Render(const game::GameLogic& gameState, const std::string& levelName, int levelNumber, int levelCount) const
     {
+        if (IsKeyPressed(KEY_G))
+        {
+            impl_->useFallbackGraphics = !impl_->useFallbackGraphics;
+        }
+
         BeginDrawing();
         ClearBackground(Color{ 24, 28, 36, 255 });
 
         DrawText("Load & Lock", 24, 24, 36, RAYWHITE);
         DrawText(TextFormat("Level %d / %d: %s", levelNumber, levelCount, levelName.c_str()), 24, 68, 24, LIGHTGRAY);
 
+        const int fieldWidth = std::max(1, gameState.GetWidth());
+        const int fieldHeight = std::max(1, gameState.GetHeight());
+        const int displayWidth = std::max(8, fieldWidth);
+        const int displayHeight = std::max(8, fieldHeight);
         const float usableWidth = static_cast<float>(GetScreenWidth()) - (kHorizontalPadding * 2.0f);
         const float usableHeight = static_cast<float>(GetScreenHeight()) - kTopPadding - kBottomPadding;
         const float tileSize = std::max(12.0f, std::floor(std::min(
-            usableWidth / static_cast<float>(std::max(1, gameState.GetWidth())),
-            usableHeight / static_cast<float>(std::max(1, gameState.GetHeight())))));
+            usableWidth / static_cast<float>(displayWidth),
+            usableHeight / static_cast<float>(displayHeight))));
 
-        const float boardWidth = tileSize * static_cast<float>(gameState.GetWidth());
-        const float boardHeight = tileSize * static_cast<float>(gameState.GetHeight());
+        const float boardWidth = tileSize * static_cast<float>(displayWidth);
+        const float boardHeight = tileSize * static_cast<float>(displayHeight);
         const float startX = std::max(kHorizontalPadding, (static_cast<float>(GetScreenWidth()) - boardWidth) * 0.5f);
         const float startY = kTopPadding;
+        const float fieldStartX = startX + (static_cast<float>(displayWidth - fieldWidth) * tileSize * 0.5f);
+        const float fieldStartY = startY + (static_cast<float>(displayHeight - fieldHeight) * tileSize * 0.5f);
 
         DrawRectangleRounded(
             Rectangle{ startX - 8.0f, startY - 8.0f, boardWidth + 16.0f, boardHeight + 16.0f },
@@ -175,8 +187,9 @@ namespace renderer
             8,
             Color{ 36, 41, 50, 255 });
 
-        const float spriteWidth = 225;//impl_->hasSprites ? static_cast<float>(impl_->sprites.width) / static_cast<float>(kSpriteColumns) : 0.0f;
-        const float spriteHeight = 225;//impl_->hasSprites ? static_cast<float>(impl_->sprites.height) / static_cast<float>(kSpriteRows) : 0.0f;
+        const bool useSpriteGraphics = impl_->hasSprites && !impl_->useFallbackGraphics;
+        const float spriteWidth = 225;
+        const float spriteHeight = 225;
 
         for (int y = 0; y < gameState.GetHeight(); ++y)
         {
@@ -185,8 +198,8 @@ namespace renderer
                 const char tile = gameState.GetRenderTile(x, y);
                 const Rectangle destination =
                 {
-                    startX + static_cast<float>(x) * tileSize,
-                    startY + static_cast<float>(y) * tileSize,
+                    fieldStartX + static_cast<float>(x) * tileSize,
+                    fieldStartY + static_cast<float>(y) * tileSize,
                     tileSize,
                     tileSize
                 };
@@ -194,7 +207,7 @@ namespace renderer
                 DrawRectangleRec(destination, tile == ' ' ? Color{ 30, 34, 42, 255 } : Color{ 62, 67, 77, 255 });
 
                 const int spriteIndex = GetSpriteIndex(tile);
-                if (impl_->hasSprites && spriteIndex >= 0)
+                if (useSpriteGraphics && spriteIndex >= 0)
                 {
                     const int spriteColumn = spriteIndex % kSpriteColumns;
                     const int spriteRow = spriteIndex / kSpriteColumns;
@@ -221,11 +234,15 @@ namespace renderer
         }
 
         DrawText(TextFormat("Moves: %d", gameState.GetMoveCount()), 24, GetScreenHeight() - 84, 24, RAYWHITE);
-        DrawText("Controls: WASD/Arrows move, N/P level, R reset, Q/Esc quit", 24, GetScreenHeight() - 50, 20, LIGHTGRAY);
+        DrawText("Controls: WASD/Arrows move, N/P level, R reset, G toggle graphics, Q/Esc quit", 24, GetScreenHeight() - 50, 20, LIGHTGRAY);
 
         if (!impl_->hasSprites)
         {
             DrawText(TextFormat("Sprite sheet not found: %s", impl_->spriteSheetPath.c_str()), 24, GetScreenHeight() - 114, 18, ORANGE);
+        }
+        else if (impl_->useFallbackGraphics)
+        {
+            DrawText("Fallback graphics enabled.", 24, GetScreenHeight() - 114, 20, ORANGE);
         }
         else if (gameState.IsComplete())
         {
