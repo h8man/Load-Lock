@@ -145,6 +145,7 @@
     <ClCompile Include="src\renderer\RaylibRenderer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="resource.h" />
     <ClInclude Include="src\assets\AssetManager.h" />
     <ClInclude Include="src\audio\AudioPlayer.h" />
     <ClInclude Include="src\audio\BeepAudioPlayer.h" />
@@ -159,6 +160,9 @@
   <ItemGroup>
     <None Include="Directory.Build.props" />
     <None Include="Directory.Build.targets" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="LoadAndLock.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

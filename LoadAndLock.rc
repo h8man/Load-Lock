@@ -1,0 +1,3 @@
+#include "resource.h"
+
+IDI_LOAD_AND_LOCK_ICON ICON "L&L.ico"
