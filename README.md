@@ -1,45 +1,93 @@
 # Load & Lock
 
-*A data-driven Sokoban implementation in C/C++.*
+`Load & Lock` is a C++17 Sokoban game with a shared game core and multiple front ends.
 
-## Overview
+![Load & Lock](L&L.png)
 
-**Load & Lock** is a modern implementation of the classic Sokoban puzzle game, built in **C/C++** using a **module-based** and **data-driven** architecture.
-
-The primary goal of this project is to provide a clean, maintainable codebase that separates game logic, rendering, input, and asset management while keeping gameplay entirely driven by external data.
-
-## Architecture
-
-The project is organized into independent modules with clear responsibilities.
+## Project layout
 
 ```text
 src/
-├── core/          # Engine core
-├── game/          # Gameplay logic
-├── renderer/      # Rendering
-├── input/         # Input handling
-├── assets/        # Asset management
-├── audio/         # Audio (optional)
-├── utils/         # Common utilities
-└── platform/      # Platform-specific code
+├── assets/    # level loading
+├── audio/     # console beep or raylib audio
+├── core/      # application loop
+├── game/      # gameplay and cutscene state
+├── input/     # console or raylib input
+└── renderer/  # console or raylib rendering
+
+assets/
+└── levels/    # .sok level files
 ```
 
-Game content lives outside the executable whenever possible.
+## Native build
+
+The Visual Studio project uses shared MSBuild properties from `Directory.Build.props`.
+
+### Build properties
+
+- `LoadAndLockRenderer`
+  - `Raylib`
+  - `Console`
+- `LoadAndLockSubsystem`
+  - `Windows`
+  - `Console`
+
+### Visual Studio / MSBuild examples
+
+Raylib windowed build:
+
+```powershell
+msbuild ".\Load & Lock.sln" /t:Build /p:Configuration=Debug /p:Platform=x64 /p:LoadAndLockRenderer=Raylib /p:LoadAndLockSubsystem=Windows
+```
+
+Console build:
+
+```powershell
+msbuild ".\Load & Lock.sln" /t:Build /p:Configuration=Debug /p:Platform=x64 /p:LoadAndLockRenderer=Console /p:LoadAndLockSubsystem=Console
+```
+
+## WebAssembly build with Emscripten
+
+A Linux-oriented `Makefile` is included for `emsdk` builds.
+
+### Requirements
+
+- `emsdk` activated in the shell
+- `em++`
+- `emrun`
+- Emscripten raylib port support via `--use-port=raylib`
+
+### Build
+
+Release build:
+
+```bash
+make
+```
+
+Debug build:
+
+```bash
+make debug
+```
+
+The output is written to:
 
 ```text
-assets/
-├── levels/
-├── textures/
-├── fonts/
-├── audio/
-└── config/
+build/web/load-and-lock.html
 ```
 
-## Data-Driven Design
+### Run locally
 
-Rather than hardcoding game content, **Load & Lock** loads its data from external files.
+```bash
+make serve
+```
 
-This approach allows modifying and expanding the game without recompiling the project.
+This uses:
+
+```text
+emrun --no_browser --port 8080 build/web/load-and-lock.html
+```
 
 ## License
 
