@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Cutscene.h"
+
 #include <string>
 #include <vector>
 
@@ -22,10 +24,12 @@ namespace game
         bool IsComplete() const;
         void SetLevelContext(const std::string& levelName, int levelNumber, int levelCount);
         void SetScoreContext(int levelScore, int totalScore, bool showCompletionScore, int completedLevelScore);
+        void SetCutsceneState(const CutsceneState& cutsceneState);
         int GetWidth() const;
         int GetHeight() const;
         int GetMoveCount() const;
         char GetRenderTile(int x, int y) const;
+        Position GetPlayerPosition() const;
         const std::string& GetLevelName() const;
         int GetLevelNumber() const;
         int GetLevelCount() const;
@@ -33,6 +37,7 @@ namespace game
         int GetTotalScore() const;
         bool ShouldShowCompletionScore() const;
         int GetCompletedLevelScore() const;
+        const CutsceneState& GetCutsceneState() const;
 
     private:
         bool IsInside(const Position& position) const;
@@ -55,5 +60,6 @@ namespace game
         int totalScore_ = 0;
         bool showCompletionScore_ = false;
         int completedLevelScore_ = 0;
+        CutsceneState cutsceneState_;
     };
 }

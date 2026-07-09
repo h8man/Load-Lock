@@ -77,6 +77,7 @@ namespace
         bool isReady = false;
         Sound move = { 0 };
         Sound levelComplete = { 0 };
+        Sound bell = { 0 };
         Sound previousLevel = { 0 };
         Sound nextLevel = { 0 };
 
@@ -99,6 +100,16 @@ namespace
                 { 1175, 90 },
                 { 1568, 180 }
             };
+            static constexpr Tone bellTones[] =
+            {
+                { 1568, 110 },
+                { 1976, 130 },
+                { 2349, 170 },
+                { 1976, 120 },
+                { 2637, 210 },
+                { 2349, 140 },
+                { 3136, 320 }
+            };
             static constexpr Tone previousLevelTones[] =
             {
                 { 1319, 50 },
@@ -112,6 +123,7 @@ namespace
 
             move = CreateSoundFromTones(moveTones, static_cast<int>(sizeof(moveTones) / sizeof(moveTones[0])));
             levelComplete = CreateSoundFromTones(levelCompleteTones, static_cast<int>(sizeof(levelCompleteTones) / sizeof(levelCompleteTones[0])));
+            bell = CreateSoundFromTones(bellTones, static_cast<int>(sizeof(bellTones) / sizeof(bellTones[0])));
             previousLevel = CreateSoundFromTones(previousLevelTones, static_cast<int>(sizeof(previousLevelTones) / sizeof(previousLevelTones[0])));
             nextLevel = CreateSoundFromTones(nextLevelTones, static_cast<int>(sizeof(nextLevelTones) / sizeof(nextLevelTones[0])));
         }
@@ -130,6 +142,10 @@ namespace
             if (levelComplete.frameCount > 0)
             {
                 UnloadSound(levelComplete);
+            }
+            if (bell.frameCount > 0)
+            {
+                UnloadSound(bell);
             }
             if (previousLevel.frameCount > 0)
             {
@@ -178,6 +194,12 @@ namespace audio
     {
         AudioState& state = GetAudioState();
         PlaySoundEffect(state.levelComplete);
+    }
+
+    void RaylibAudioPlayer::PlayBell() const
+    {
+        AudioState& state = GetAudioState();
+        PlaySoundEffect(state.bell);
     }
 
     void RaylibAudioPlayer::PlayPreviousLevel() const

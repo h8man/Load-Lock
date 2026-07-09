@@ -138,6 +138,7 @@
     <ClCompile Include="src\audio\BeepAudioPlayer.cpp" />
     <ClCompile Include="src\audio\RaylibAudioPlayer.cpp" />
     <ClCompile Include="src\core\Application.cpp" />
+    <ClCompile Include="src\game\Cutscene.cpp" />
     <ClCompile Include="src\game\GameLogic.cpp" />
     <ClCompile Include="src\input\InputHandler.cpp" />
     <ClCompile Include="src\input\RaylibInputHandler.cpp" />
@@ -151,6 +152,7 @@
     <ClInclude Include="src\audio\BeepAudioPlayer.h" />
     <ClInclude Include="src\audio\RaylibAudioPlayer.h" />
     <ClInclude Include="src\core\Application.h" />
+    <ClInclude Include="src\game\Cutscene.h" />
     <ClInclude Include="src\game\GameLogic.h" />
     <ClInclude Include="src\input\InputHandler.h" />
     <ClInclude Include="src\input\RaylibInputHandler.h" />
@@ -168,3 +170,4 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
 </Project>
+

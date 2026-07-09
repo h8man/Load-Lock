@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <raylib.h>
 #include <string>
+#include <vector>
 
 namespace fs = std::filesystem;
 
@@ -41,6 +42,22 @@ namespace
         }
 
         return candidates[0].string();
+    }
+
+    float Clamp01(float value)
+    {
+        return std::clamp(value, 0.0f, 1.0f);
+    }
+
+    float EaseOutCubic(float value)
+    {
+        const float t = 1.0f - Clamp01(value);
+        return 1.0f - (t * t * t);
+    }
+
+    float EaseInOutSine(float value)
+    {
+        return -(std::cos(3.14159265f * Clamp01(value)) - 1.0f) * 0.5f;
     }
 
     int GetSpriteIndex(char tile)
@@ -190,12 +207,54 @@ namespace renderer
         const bool useSpriteGraphics = impl_->hasSprites && !impl_->useFallbackGraphics;
         const float spriteWidth = 225;
         const float spriteHeight = 225;
+        const game::CutsceneState& cutsceneState = gameState.GetCutsceneState();
+        const bool showFinalCutscene = cutsceneState.isActive;
+        const game::Position playerPosition = gameState.GetPlayerPosition();
+        struct AnimatedCrate
+        {
+            char tile;
+            Rectangle destination;
+        };
+        std::vector<AnimatedCrate> animatedCrates;
+        const auto drawTile = [&](char tile, const Rectangle& destination, Color tint = WHITE)
+        {
+            DrawRectangleRec(destination, tile == ' ' ? Color{ 30, 34, 42, 255 } : Color{ 62, 67, 77, 255 });
+
+            const int spriteIndex = GetSpriteIndex(tile);
+            if (useSpriteGraphics && spriteIndex >= 0)
+            {
+                const int spriteColumn = spriteIndex % kSpriteColumns;
+                const int spriteRow = spriteIndex / kSpriteColumns;
+                const int hPadding = 25 * spriteColumn + 25;
+                const int vPadding = 75 * spriteRow + 25;
+                DrawTexturePro(
+                    impl_->sprites,
+                    Rectangle{
+                        spriteWidth * static_cast<float>(spriteColumn) + hPadding,
+                        spriteHeight * static_cast<float>(spriteRow) + vPadding,
+                        spriteWidth,
+                        spriteHeight
+                    },
+                    destination,
+                    Vector2{ 0.0f, 0.0f },
+                    0.0f,
+                    tint);
+            }
+            else if (spriteIndex >= 0)
+            {
+                DrawFallbackTile(tile, destination);
+                if (tint.a < 255)
+                {
+                    DrawRectangleRec(destination, Fade(Color{ 255, 255, 255, 255 }, 1.0f - (static_cast<float>(tint.a) / 255.0f)));
+                }
+            }
+        };
 
         for (int y = 0; y < gameState.GetHeight(); ++y)
         {
             for (int x = 0; x < gameState.GetWidth(); ++x)
             {
-                const char tile = gameState.GetRenderTile(x, y);
+                char tile = gameState.GetRenderTile(x, y);
                 const Rectangle destination =
                 {
                     fieldStartX + static_cast<float>(x) * tileSize,
@@ -204,32 +263,20 @@ namespace renderer
                     tileSize
                 };
 
-                DrawRectangleRec(destination, tile == ' ' ? Color{ 30, 34, 42, 255 } : Color{ 62, 67, 77, 255 });
+                if (showFinalCutscene)
+                {
+                    if (x == playerPosition.x && y == playerPosition.y)
+                    {
+                        tile = tile == '+' ? '.' : ' ';
+                    }
+                    else if (tile == '$' || tile == '*')
+                    {
+                        animatedCrates.push_back({ tile, destination });
+                        tile = tile == '*' ? '.' : ' ';
+                    }
+                }
 
-                const int spriteIndex = GetSpriteIndex(tile);
-                if (useSpriteGraphics && spriteIndex >= 0)
-                {
-                    const int spriteColumn = spriteIndex % kSpriteColumns;
-                    const int spriteRow = spriteIndex / kSpriteColumns;
-                    const int hPadding = 25 * (spriteColumn) + 25;
-                    const int vPadding = 75 * (spriteRow) + 25;
-                    DrawTexturePro(
-                        impl_->sprites,
-                        Rectangle{
-                            spriteWidth * static_cast<float>(spriteColumn) + hPadding,
-                            spriteHeight * static_cast<float>(spriteRow) + vPadding,
-                            spriteWidth,
-                            spriteHeight
-                        },
-                        destination,
-                        Vector2{ 0.0f, 0.0f },
-                        0.0f,
-                        WHITE);
-                }
-                else if (spriteIndex >= 0)
-                {
-                    DrawFallbackTile(tile, destination);
-                }
+                drawTile(tile, destination);
             }
         }
 
@@ -246,7 +293,7 @@ namespace renderer
         {
             DrawText("Fallback graphics enabled.", 24, GetScreenHeight() - 114, 20, ORANGE);
         }
-        else if (gameState.IsComplete())
+        else if (gameState.IsComplete() && !cutsceneState.isOverlayVisible)
         {
             DrawText("Level complete. Press N, P, R or Q.", 24, GetScreenHeight() - 114, 20, Color{ 120, 230, 140, 255 });
         }
@@ -269,6 +316,94 @@ namespace renderer
             DrawText(title, panelX + 30, panelY + 18, 30, Color{ 255, 230, 120, 255 });
             DrawText(stageScoreText, panelX + 30, panelY + 62, 28, RAYWHITE);
             DrawText(totalScoreText, panelX + 30, panelY + 94, 24, Color{ 120, 230, 140, 255 });
+        }
+
+        if (cutsceneState.isActive)
+        {
+            const float progress = Clamp01(cutsceneState.progress);
+            const float warmth = 0.18f + EaseOutCubic(progress) * 0.24f;
+
+            const float bounceWindow = Clamp01((progress - 0.08f) / 0.5f);
+            const float bounceOffset = -std::fabs(std::sin(progress * 22.0f)) * tileSize * 0.28f * bounceWindow;
+            const char playerTile = gameState.GetRenderTile(playerPosition.x, playerPosition.y);
+            const Rectangle playerDestination =
+            {
+                fieldStartX + static_cast<float>(playerPosition.x) * tileSize,
+                fieldStartY + static_cast<float>(playerPosition.y) * tileSize,
+                tileSize,
+                tileSize
+            };
+            drawTile(
+                playerTile,
+                Rectangle{
+                    playerDestination.x,
+                    playerDestination.y + bounceOffset,
+                    playerDestination.width,
+                    playerDestination.height
+                });
+
+            const float helperArrival = EaseOutCubic(Clamp01((progress - 0.28f) / 0.22f));
+            const float pushProgress = EaseInOutSine(Clamp01((progress - 0.48f) / 0.22f));
+            const float stackCenterX = static_cast<float>(GetScreenWidth()) * 0.5f;
+            const float offscreenMargin = tileSize * 2.0f;
+
+            for (std::size_t crateIndex = 0; crateIndex < animatedCrates.size(); ++crateIndex)
+            {
+                const AnimatedCrate& animatedCrate = animatedCrates[crateIndex];
+                const float direction = (animatedCrate.destination.x + animatedCrate.destination.width * 0.5f) < stackCenterX ? -1.0f : 1.0f;
+                const float offscreenTargetX = direction < 0.0f
+                    ? -animatedCrate.destination.width - offscreenMargin
+                    : static_cast<float>(GetScreenWidth()) + offscreenMargin;
+                const float crateX = animatedCrate.destination.x + (offscreenTargetX - animatedCrate.destination.x) * pushProgress;
+                const Rectangle movedCrateDestination =
+                {
+                    crateX,
+                    animatedCrate.destination.y,
+                    animatedCrate.destination.width,
+                    animatedCrate.destination.height
+                };
+                if (movedCrateDestination.x + movedCrateDestination.width > 0.0f && movedCrateDestination.x < static_cast<float>(GetScreenWidth()))
+                {
+                    drawTile(animatedCrate.tile, movedCrateDestination);
+                }
+
+                const float helperTargetX = movedCrateDestination.x - direction * tileSize * 0.92f;
+                const float helperStartX = direction < 0.0f
+                    ? static_cast<float>(GetScreenWidth()) + offscreenMargin
+                    : -offscreenMargin;
+                const float helperX = helperStartX + (helperTargetX - helperStartX) * helperArrival;
+                const float helperBob = std::fabs(std::sin(progress * 18.0f + static_cast<float>(crateIndex) * 0.65f)) * tileSize * 0.07f;
+                drawTile(
+                    '@',
+                    Rectangle{
+                        helperX,
+                        movedCrateDestination.y - helperBob,
+                        tileSize,
+                        tileSize
+                    });
+            }
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(Color{ 255, 152, 70, 255 }, warmth));
+        }
+
+        if (cutsceneState.isOverlayVisible)
+        {
+            const float alpha = Clamp01(cutsceneState.overlayOpacity);
+            DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.35f + alpha * 0.5f));
+
+            const int panelWidth = 460;
+            const int panelHeight = 220;
+            const int panelX = (GetScreenWidth() - panelWidth) / 2;
+            const int panelY = (GetScreenHeight() - panelHeight) / 2;
+            DrawRectangleRounded(
+                Rectangle{ static_cast<float>(panelX), static_cast<float>(panelY), static_cast<float>(panelWidth), static_cast<float>(panelHeight) },
+                0.12f,
+                10,
+                Fade(Color{ 32, 18, 14, 255 }, 0.82f * alpha));
+
+            DrawText("Final Score", panelX + 112, panelY + 34, 38, Fade(Color{ 255, 226, 155, 255 }, alpha));
+            DrawText(TextFormat("Total Score: %d", gameState.GetTotalScore()), panelX + 86, panelY + 98, 34, Fade(RAYWHITE, alpha));
+            DrawText("Thanks for playing!", panelX + 98, panelY + 150, 28, Fade(Color{ 255, 202, 170, 255 }, alpha));
+            DrawText("Press Q or Esc to exit", panelX + 110, panelY + 186, 22, Fade(LIGHTGRAY, alpha));
         }
 
         EndDrawing();

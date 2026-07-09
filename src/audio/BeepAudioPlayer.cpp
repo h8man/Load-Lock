@@ -35,6 +35,10 @@ namespace audio
         PlayToneSequence(tones, static_cast<int>(sizeof(tones) / sizeof(tones[0])));
     }
 
+    void BeepAudioPlayer::PlayBell() const
+    {
+    }
+
     void BeepAudioPlayer::PlayPreviousLevel() const
     {
         static constexpr int tones[][2] =

@@ -37,6 +37,11 @@ namespace
 
 namespace renderer
 {
+    bool ConsoleRenderer::IsOpen() const
+    {
+        return true;
+    }
+
     void ConsoleRenderer::Render(const game::GameLogic& gameState) const
     {
         ClearConsole();

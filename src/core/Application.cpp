@@ -46,6 +46,7 @@ namespace core
         bool shouldAdvanceToNextLevel = false;
         Clock::time_point completionScoreDisplayUntil = Clock::time_point::min();
         bool wasLevelComplete = false;
+        game::CutscenePlayer cutscenePlayer;
 
         const auto calculateLevelScore = [&](int moveCount)
         {
@@ -60,6 +61,7 @@ namespace core
             lastCompletedLevelScore = 0;
             completionScoreDisplayUntil = Clock::time_point::min();
             wasLevelComplete = gameState.IsComplete();
+            cutscenePlayer.Reset();
         };
 
         const auto loadCurrentLevel = [&]() -> bool
@@ -84,6 +86,7 @@ namespace core
                 totalScore,
                 showCompletionScore,
                 lastCompletedLevelScore);
+            gameState.SetCutsceneState(cutscenePlayer.GetState());
         };
 
         if (!loadCurrentLevel())
@@ -100,12 +103,10 @@ namespace core
         renderer::ConsoleRenderer renderer;
 #endif
 
-#ifdef LOAD_AND_LOCK_USE_RAYLIB
         while (renderer.IsOpen())
-#else
-        while (true)
-#endif
         {
+            cutscenePlayer.Update(Clock::now());
+
             updateScoreContext();
             renderer.Render(gameState);
 
@@ -146,6 +147,24 @@ namespace core
 
                     resetCompletionState();
                 }
+                else
+                {
+                    cutscenePlayer.Start(Clock::now());
+                    audioPlayer.PlayBell();
+                }
+            }
+
+            const game::CutsceneState& cutsceneState = cutscenePlayer.GetState();
+            if (cutsceneState.isActive || cutsceneState.isOverlayVisible)
+            {
+                const input::Command command = inputHandler.ReadCommand();
+                if (command == input::Command::Quit)
+                {
+                    return 0;
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(16));
+                continue;
             }
 
             const auto moveWithFeedback = [&](int dx, int dy)

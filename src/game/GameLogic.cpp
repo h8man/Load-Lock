@@ -1,4 +1,5 @@
 #include "GameLogic.h"
+#include "GameLogic.h"
 
 #include <algorithm>
 
@@ -178,6 +179,13 @@ namespace game
         completedLevelScore_ = completedLevelScore;
     }
 
+    void GameLogic::SetCutsceneState(const CutsceneState& cutsceneState)
+    {
+        cutsceneState_ = cutsceneState;
+        SetCutsceneProgress(cutsceneState_, cutsceneState_.progress);
+        SetCutsceneOverlay(cutsceneState_, cutsceneState_.isOverlayVisible, cutsceneState_.overlayOpacity);
+    }
+
     int GameLogic::GetWidth() const
     {
         return width_;
@@ -207,6 +215,11 @@ namespace game
         }
 
         return tiles_[y][x];
+    }
+
+    Position GameLogic::GetPlayerPosition() const
+    {
+        return player_;
     }
 
     const std::string& GameLogic::GetLevelName() const
@@ -242,6 +255,11 @@ namespace game
     int GameLogic::GetCompletedLevelScore() const
     {
         return completedLevelScore_;
+    }
+
+    const CutsceneState& GameLogic::GetCutsceneState() const
+    {
+        return cutsceneState_;
     }
 
     bool GameLogic::IsInside(const Position& position) const
