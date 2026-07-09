@@ -1,5 +1,4 @@
 #include "Application.h"
-#include "Application.h"
 
 #include "../audio/AudioPlayer.h"
 #include "../assets/AssetManager.h"
