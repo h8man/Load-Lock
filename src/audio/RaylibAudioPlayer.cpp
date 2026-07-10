@@ -74,7 +74,6 @@ namespace
 
     struct AudioState
     {
-        bool initializationAttempted = false;
         bool isReady = false;
         Sound move = { 0 };
         Sound levelComplete = { 0 };
@@ -84,12 +83,11 @@ namespace
 
         void Initialize()
         {
-            if (initializationAttempted)
+            if (isReady)
             {
                 return;
             }
 
-            initializationAttempted = true;
             InitAudioDevice();
             isReady = IsAudioDeviceReady();
             if (!isReady)
@@ -235,6 +233,6 @@ namespace audio
     bool RaylibAudioPlayer::IsLevelCompletePlaying() const
     {
         AudioState& state = GetAudioState();
-        return state.isReady && state.levelComplete.frameCount > 0 && IsSoundPlaying(state.levelComplete);
+        return !IsAudioDeviceReady() || state.levelComplete.frameCount > 0 && IsSoundPlaying(state.levelComplete);
     }
 }

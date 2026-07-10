@@ -31,6 +31,7 @@ EMFLAGS := \
     -sALLOW_MEMORY_GROWTH=1 \
     -sASYNCIFY \
     -sFORCE_FILESYSTEM=1 \
+    -sEXIT_RUNTIME=1 \
     --preload-file assets \
     --preload-file sprites.png \
     --preload-file L\&L.png \

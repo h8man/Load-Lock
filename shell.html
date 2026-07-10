@@ -11,7 +11,9 @@
         html, body {
             margin: 0;
             height: 100%;
-            background: #111;
+            background: radial-gradient(circle at top, #1a2330 0%, #10141c 60%);
+            overflow: hidden;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
         #canvas {
@@ -21,20 +23,158 @@
             outline: none;
             background: #000;
         }
+
+        #start-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(18, 20, 28, 0.82);
+            z-index: 10;
+        }
+
+        #start-panel {
+            width: min(90vw, 520px);
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(38, 42, 54, 0.96), rgba(18, 20, 28, 0.96));
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+            color: #f3f4f6;
+            text-align: center;
+        }
+
+        #start-panel h1 {
+            margin: 0 0 12px;
+            font-size: 32px;
+        }
+
+        #start-panel p {
+            margin: 0 0 24px;
+            color: #d7dfeb;
+            line-height: 1.5;
+        }
+
+        #start-button {
+            border: 0;
+            border-radius: 999px;
+            padding: 14px 28px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+            background: #22C55E;
+            cursor: pointer;
+        }
+
+        #start-button:hover {
+            background: #4ADE80;
+        }
+
+        #start-status {
+            min-height: 24px;
+            margin-top: 18px;
+            color: #ffd27a;
+            font-size: 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
     <canvas id="canvas" tabindex="0" oncontextmenu="event.preventDefault()"></canvas>
+    <div id="start-overlay">
+        <div id="start-panel">
+            <h1>Load &amp; Lock</h1>
+            <p>Click to start the game and enable audio in the browser.</p>
+            <button id="start-button" type="button">Press to Start</button>
+            <div id="start-status">Loading...</div>
+        </div>
+    </div>
 
     <script>
+        const startOverlay = document.getElementById("start-overlay");
+        const startPanelTitle = document.querySelector("#start-panel h1");
+        const startPanelMessage = document.querySelector("#start-panel p");
+        const startButton = document.getElementById("start-button");
+        const startStatus = document.getElementById("start-status");
+
+        let runtimeReady = false;
+        let startRequested = false;
+        let mainStarted = false;
+
+        startButton.dataset.mode = "start";
+
+        const showReloadOverlay = () => {
+            startPanelTitle.textContent = "Load & Lock";
+            startPanelMessage.textContent = "The game has closed. Reload the page to start again.";
+            startButton.textContent = "Reload";
+            startButton.dataset.mode = "reload";
+            startStatus.textContent = "";
+            startOverlay.classList.remove("hidden");
+        };
+
+        window.showReloadOverlay = showReloadOverlay;
+
+        const tryStartGame = () => {
+            if (!runtimeReady || !startRequested || mainStarted) {
+                return;
+            }
+
+            mainStarted = true;
+            startOverlay.classList.add("hidden");
+            const canvas = document.getElementById("canvas");
+            canvas.focus();
+
+            let result;
+
+            if (typeof Module.callMain === "function") {
+                result = Module.callMain([]);
+            } else if (typeof callMain === "function") {
+                result = callMain([]);
+            }
+
+            return result;
+        };
+
         var Module = {
+            noInitialRun: true,
             canvas: (() => {
                 const canvas = document.getElementById("canvas");
-
-
+                canvas.addEventListener("click", () => canvas.focus());
                 return canvas;
             })(),
+            setStatus: (text) => {
+                startStatus.textContent = text || "";
+            },
+            onRuntimeInitialized: () => {
+                runtimeReady = true;
+                startStatus.textContent = "Ready";
+                tryStartGame();
+            },
+            onAbort: (reason) => {
+                showReloadOverlay();
+            },
+            onExit: (reason) => {
+                showReloadOverlay();
+            }
         };
+
+        startButton.addEventListener("click", () => {
+            if (startButton.dataset.mode === "reload") {
+                window.location.reload();
+                return;
+            }
+
+            startRequested = true;
+            startButton.textContent = "Press to Start";
+            startButton.dataset.mode = "start";
+            startPanelMessage.textContent = "Click to start the game and enable audio in the browser.";
+            startStatus.textContent = runtimeReady ? "Starting..." : "Preparing...";
+            tryStartGame();
+        });
     </script>
     {{{ SCRIPT }}}
 </body>
