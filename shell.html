@@ -5,6 +5,12 @@
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="L&L.ico">
     <link rel="icon" type="image/png" sizes="256x256" href="L&L.png">
+    <link rel="apple-touch-icon" href="L&L.png">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#10141c">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Load &amp; Lock</title>
     <style>
@@ -308,6 +314,15 @@
             startStatus.textContent = runtimeReady ? "Starting..." : "Preparing...";
             tryStartGame();
         });
+    </script>
+    <script>
+        if ("serviceWorker" in navigator) {
+            window.addEventListener("load", () => {
+                navigator.serviceWorker.register("service-worker.js").catch((error) => {
+                    console.warn("Service worker registration failed", error);
+                });
+            });
+        }
     </script>
     {{{ SCRIPT }}}
 </body>

@@ -1,0 +1,24 @@
+{
+  "name": "Load & Lock",
+  "short_name": "Load&Lock",
+  "description": "Play Load & Lock in the browser, including touch controls for mobile devices.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#10141c",
+  "theme_color": "#10141c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "L&L.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "L&L.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}

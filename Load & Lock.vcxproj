@@ -156,6 +156,8 @@
   <ItemGroup>
     <None Include="Directory.Build.props" />
     <None Include="Directory.Build.targets" />
+    <None Include="manifest.webmanifest" />
+    <None Include="service-worker.js" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LoadAndLock.rc" />
