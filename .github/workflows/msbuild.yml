@@ -1,0 +1,71 @@
+name: Windows Release Build
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+
+env:
+  SOLUTION_FILE_PATH: Load & Lock.sln
+  BUILD_CONFIGURATION: Release
+  BUILD_PLATFORM: x64
+  LOAD_AND_LOCK_RENDERER: Raylib
+  LOAD_AND_LOCK_SUBSYSTEM: Windows
+  RELEASE_DIR: release/load-and-lock-windows-x64
+  RELEASE_ZIP: load-and-lock-windows-x64-${{ github.ref_name }}.zip
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v3
+
+    - name: Build
+      shell: pwsh
+      run: >
+        msbuild ".\${env:SOLUTION_FILE_PATH}"
+        /m
+        /t:Build
+        /p:Configuration=${env:BUILD_CONFIGURATION}
+        /p:Platform=${env:BUILD_PLATFORM}
+        /p:LoadAndLockRenderer=${env:LOAD_AND_LOCK_RENDERER}
+        /p:LoadAndLockSubsystem=${env:LOAD_AND_LOCK_SUBSYSTEM}
+      
+    - name: Package release
+      shell: pwsh
+      run: |
+        New-Item -ItemType Directory -Force -Path $env:RELEASE_DIR | Out-Null
+        Copy-Item "x64/Release/*.exe" $env:RELEASE_DIR
+        if (Test-Path "x64/Release/*.dll") {
+          Copy-Item "x64/Release/*.dll" $env:RELEASE_DIR
+        }
+        Copy-Item "assets" "$env:RELEASE_DIR/assets" -Recurse
+        Copy-Item "sprites.png" $env:RELEASE_DIR
+        Copy-Item "L&L.png" $env:RELEASE_DIR
+        Copy-Item "L&L.ico" $env:RELEASE_DIR
+        Copy-Item "LICENSE" $env:RELEASE_DIR
+        Compress-Archive -Path "$env:RELEASE_DIR/*" -DestinationPath $env:RELEASE_ZIP -Force
+    
+    - name: Upload release artifact
+      uses: actions/upload-artifact@v7
+      with:
+        name: load-and-lock-windows-x64
+        path: |
+          ${{ env.RELEASE_DIR }}
+          ${{ env.RELEASE_ZIP }}
+
+    - name: Release
+      uses: softprops/action-gh-release@v3
+      if: github.ref_type == 'tag'
+      with:
+        files: ${{ env.RELEASE_ZIP }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
