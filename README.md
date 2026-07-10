@@ -4,6 +4,10 @@
 
 ![Load & Lock](L&L.png)
 
+Play in browser:
+
+`https://h8man.github.io/Load-n-Lock/`
+
 ## Project layout
 
 ```text
@@ -74,7 +78,7 @@ make debug
 The output is written to:
 
 ```text
-build/web/load-and-lock.html
+build/web/index.html
 ```
 
 ### Run locally
@@ -86,7 +90,7 @@ make serve
 This uses:
 
 ```text
-emrun --no_browser --port 8080 build/web/load-and-lock.html
+emrun --no_browser --port 8080 build/web/index.html
 ```
 
 ## License
