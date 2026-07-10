@@ -3,6 +3,7 @@ BUILD_DIR ?= build/web
 TARGET_NAME ?= index
 TARGET ?= $(BUILD_DIR)/$(TARGET_NAME).html
 SHELL_FILE ?= shell.html
+TOUCH_CONTROLS_SCRIPT ?= touch-controls.js
 RAYLIB_WEB_DIR ?= raylib-web
 RAYLIB_WEB_INCLUDE_DIR ?= $(RAYLIB_WEB_DIR)/include
 RAYLIB_WEB_LIB ?= $(RAYLIB_WEB_DIR)/lib/libraylib.web.a
@@ -52,10 +53,11 @@ debug: $(TARGET)
 release: CXXFLAGS := $(COMMON_FLAGS) $(RELEASE_FLAGS)
 release: $(TARGET)
 
-$(TARGET): $(SOURCES) $(SHELL_FILE)
+$(TARGET): $(SOURCES) $(SHELL_FILE) $(TOUCH_CONTROLS_SCRIPT)
 > mkdir -p $(BUILD_DIR)
 > cp L\&L.png $(BUILD_DIR)
 > cp L\&L.ico $(BUILD_DIR)
+> cp $(TOUCH_CONTROLS_SCRIPT) $(BUILD_DIR)
 > $(EMXX) $(MAIN_SRC) $(SOURCES) $(CXXFLAGS) $(EMFLAGS) $(RAYLIB_WEB_LIB) -o $(TARGET) 
 
 clean:

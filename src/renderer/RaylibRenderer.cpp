@@ -235,10 +235,10 @@ namespace renderer
 
         layout.boardWidth = layout.tileSize * static_cast<float>(layout.displayWidth);
         layout.boardHeight = layout.tileSize * static_cast<float>(layout.displayHeight);
-        layout.startX = std::max(kHorizontalPadding, (static_cast<float>(GetScreenWidth()) - layout.boardWidth) * 0.5f);
+        layout.startX = std::round(std::max(kHorizontalPadding, (static_cast<float>(GetScreenWidth()) - layout.boardWidth) * 0.5f));
         layout.startY = kTopPadding;
-        layout.fieldStartX = layout.startX + (static_cast<float>(layout.displayWidth - layout.fieldWidth) * layout.tileSize * 0.5f);
-        layout.fieldStartY = layout.startY + (static_cast<float>(layout.displayHeight - layout.fieldHeight) * layout.tileSize * 0.5f);
+        layout.fieldStartX = std::round(layout.startX + (static_cast<float>(layout.displayWidth - layout.fieldWidth) * layout.tileSize * 0.5f));
+        layout.fieldStartY = std::round(layout.startY + (static_cast<float>(layout.displayHeight - layout.fieldHeight) * layout.tileSize * 0.5f));
         return layout;
     }
 

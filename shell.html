@@ -5,7 +5,7 @@
     <!-- Favicons -->
     <link rel="icon" type="image/x-icon" href="L&L.ico">
     <link rel="icon" type="image/png" sizes="256x256" href="L&L.png">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <title>Load &amp; Lock</title>
     <style>
         html, body {
@@ -14,6 +14,7 @@
             background: radial-gradient(circle at top, #1a2330 0%, #10141c 60%);
             overflow: hidden;
             font-family: Arial, Helvetica, sans-serif;
+            touch-action: none;
         }
 
         #canvas {
@@ -22,6 +23,7 @@
             height: 100vh;
             outline: none;
             background: #000;
+            touch-action: none;
         }
 
         #start-overlay {
@@ -78,6 +80,105 @@
             font-size: 14px;
         }
 
+        #touch-controls {
+            position: fixed;
+            inset: auto 0 0 0;
+            display: none;
+            justify-content: space-between;
+            align-items: end;
+            gap: 20px;
+            padding: 20px;
+            z-index: 5;
+            pointer-events: none;
+            box-sizing: border-box;
+        }
+
+        #touch-controls.visible {
+            display: flex;
+        }
+
+        #touch-dpad,
+        #touch-actions {
+            pointer-events: auto;
+        }
+
+        #touch-dpad {
+            display: grid;
+            grid-template-columns: 64px 64px 64px;
+            grid-template-rows: 64px 64px 64px;
+            gap: 10px;
+        }
+
+        #touch-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(64px, 78px));
+            gap: 10px;
+            align-content: end;
+        }
+
+        #touch-actions > :first-child {
+            grid-column: span 2;
+        }
+
+        #touch-actions .touch-button {
+            min-height: 64px;
+        }
+
+        .touch-spacer {
+            width: 64px;
+            height: 64px;
+        }
+
+        .touch-button {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(38, 42, 54, 0.96), rgba(18, 20, 28, 0.96));
+            color: #f3f4f6;
+            font-size: 24px;
+            font-weight: 700;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .touch-button.touch-small {
+            font-size: 16px;
+        }
+
+        .touch-button.touch-active,
+        .touch-button:active {
+            background: linear-gradient(180deg, rgba(74, 222, 128, 0.96), rgba(34, 197, 94, 0.96));
+            color: #111827;
+        }
+
+        @media (max-width: 720px) {
+            #touch-controls {
+                padding: 14px;
+                gap: 14px;
+            }
+
+            #touch-dpad {
+                grid-template-columns: 56px 56px 56px;
+                grid-template-rows: 56px 56px 56px;
+                gap: 8px;
+            }
+
+            #touch-actions {
+                grid-template-columns: repeat(2, minmax(64px, 78px));
+                gap: 8px;
+            }
+
+            #touch-actions .touch-button {
+                min-height: 64px;
+            }
+
+            .touch-spacer {
+                width: 56px;
+                height: 56px;
+            }
+        }
+
         .hidden {
             display: none !important;
         }
@@ -93,21 +194,54 @@
             <div id="start-status">Loading...</div>
         </div>
     </div>
+    <div id="touch-controls" aria-label="Touch controls">
+        <div id="touch-dpad">
+            <div class="touch-spacer"></div>
+            <button class="touch-button" type="button" data-key="ArrowUp" aria-label="Move up">▲</button>
+            <div class="touch-spacer"></div>
 
+            <button class="touch-button" type="button" data-key="ArrowLeft" aria-label="Move left">◀</button>
+            <div class="touch-spacer"></div>
+            <button class="touch-button" type="button" data-key="ArrowRight" aria-label="Move right">▶</button>
+
+            <div class="touch-spacer"></div>
+            <button class="touch-button" type="button" data-key="ArrowDown" aria-label="Move down">▼</button>
+            <div class="touch-spacer"></div>
+        </div>
+
+        <div id="touch-actions">
+            <button class="touch-button touch-small" type="button" data-key="KeyG" aria-label="Toggle graphics">Graphics</button>
+            <button class="touch-button touch-small" type="button" data-key="KeyP" aria-label="Previous level">Prev</button>
+            <button class="touch-button touch-small" type="button" data-key="KeyN" aria-label="Next level">Next</button>
+            <button class="touch-button touch-small" type="button" data-key="KeyR" aria-label="Reset level">Reset</button>
+            <button class="touch-button touch-small" type="button" data-key="KeyQ" aria-label="Quit game">Quit</button>
+        </div>
+    </div>
+
+    <script src="touch-controls.js"></script>
     <script>
         const startOverlay = document.getElementById("start-overlay");
         const startPanelTitle = document.querySelector("#start-panel h1");
         const startPanelMessage = document.querySelector("#start-panel p");
         const startButton = document.getElementById("start-button");
         const startStatus = document.getElementById("start-status");
+        const canvas = document.getElementById("canvas");
+        const touchControls = document.getElementById("touch-controls");
+        const touchButtons = Array.from(document.querySelectorAll("#touch-controls .touch-button"));
 
         let runtimeReady = false;
         let startRequested = false;
         let mainStarted = false;
+        const touchControlsApi = window.createTouchControls({
+            canvas,
+            touchControls,
+            touchButtons
+        });
 
         startButton.dataset.mode = "start";
 
         const showReloadOverlay = () => {
+            touchControlsApi.setEnabled(false);
             startPanelTitle.textContent = "Load & Lock";
             startPanelMessage.textContent = "The game has closed. Reload the page to start again.";
             startButton.textContent = "Reload";
@@ -125,7 +259,7 @@
 
             mainStarted = true;
             startOverlay.classList.add("hidden");
-            const canvas = document.getElementById("canvas");
+            touchControlsApi.setEnabled(true);
             canvas.focus();
 
             let result;
@@ -142,7 +276,6 @@
         var Module = {
             noInitialRun: true,
             canvas: (() => {
-                const canvas = document.getElementById("canvas");
                 canvas.addEventListener("click", () => canvas.focus());
                 return canvas;
             })(),
