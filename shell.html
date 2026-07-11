@@ -238,6 +238,7 @@
         let runtimeReady = false;
         let startRequested = false;
         let mainStarted = false;
+        let touchRegisteredForFullscreen = false;
         const touchControlsApi = window.createTouchControls({
             canvas,
             touchControls,
@@ -257,6 +258,33 @@
         };
 
         window.showReloadOverlay = showReloadOverlay;
+
+        const requestFullscreenOnStart = async () => {
+            const fullscreenTarget = document.documentElement;
+            const requestFullscreen = fullscreenTarget.requestFullscreen
+                || fullscreenTarget.webkitRequestFullscreen
+                || fullscreenTarget.msRequestFullscreen;
+
+            if (typeof requestFullscreen !== "function" || document.fullscreenElement) {
+                return;
+            }
+
+            try {
+                await requestFullscreen.call(fullscreenTarget);
+            } catch (error) {
+                console.warn("Fullscreen request failed", error);
+            }
+        };
+
+        window.addEventListener("pointerdown", (event) => {
+            if (event.pointerType === "touch") {
+                touchRegisteredForFullscreen = true;
+            }
+        }, { passive: true });
+
+        window.addEventListener("touchstart", () => {
+            touchRegisteredForFullscreen = true;
+        }, { passive: true });
 
         const tryStartGame = () => {
             if (!runtimeReady || !startRequested || mainStarted) {
@@ -312,6 +340,9 @@
             startButton.dataset.mode = "start";
             startPanelMessage.textContent = "Click to start the game and enable audio in the browser.";
             startStatus.textContent = runtimeReady ? "Starting..." : "Preparing...";
+            if (touchRegisteredForFullscreen) {
+                requestFullscreenOnStart();
+            }
             tryStartGame();
         });
     </script>
