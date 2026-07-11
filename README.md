@@ -8,21 +8,6 @@ Play in browser:
 
 https://h8man.github.io/Load-n-Lock/
 
-## Project layout
-
-```text
-src/
-├── assets/    # level loading
-├── audio/     # console beep or raylib audio
-├── core/      # application loop
-├── game/      # gameplay and cutscene state
-├── input/     # console or raylib input
-└── renderer/  # console or raylib rendering
-
-assets/
-└── levels/    # .sok level files
-```
-
 ## Native build
 
 The Visual Studio project uses shared MSBuild properties from `Directory.Build.props`.
@@ -57,9 +42,6 @@ A Linux-oriented `Makefile` is included for `emsdk` builds.
 ### Requirements
 
 - `emsdk` activated in the shell
-- `em++`
-- `emrun`
-- Emscripten raylib port support via `--use-port=raylib`
 
 ### Build
 
